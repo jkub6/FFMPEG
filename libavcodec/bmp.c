@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+/* here is just a little test comment to prove the clone repo worked -campbell */
 #include <inttypes.h>
 
 #include "avcodec.h"
