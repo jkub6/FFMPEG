@@ -49,17 +49,20 @@ static int cool_decode_frame(AVCodecContext *avctx,
     const uint8_t *buf0 = buf;
     GetByteContext gb;
 
-    if (buf_size < 14) {
+    if (buf_size < 14)
+    {
         av_log(avctx, AV_LOG_ERROR, "buf size too small (%d)\n", buf_size);
         return AVERROR_INVALIDDATA;
     }
 
     if (bytestream_get_byte(&buf) != 'B' ||
-        bytestream_get_byte(&buf) != 'M') {
+        bytestream_get_byte(&buf) != 'M')
+    {
         av_log(avctx, AV_LOG_ERROR, "bad magic number\n");
         return AVERROR_INVALIDDATA;
     }
 
+    /*
     fsize = bytestream_get_le32(&buf);
     if (buf_size < fsize) {
         av_log(avctx, AV_LOG_ERROR, "not enough data (%d < %u), trying to decode anyway\n",
@@ -67,17 +70,18 @@ static int cool_decode_frame(AVCodecContext *avctx,
         fsize = buf_size;
     }
 
-    buf += 2; /* reserved1 */
-    buf += 2; /* reserved2 */
+    buf += 2; /* reserved1 ijn/
+    buf += 2; /* reserved2 ihi/
 
+    */
     hsize  = bytestream_get_le32(&buf); /* header size */
-    ihsize = bytestream_get_le32(&buf); /* more header size */
+    /*ihsize = bytestream_get_le32(&buf); /* more header size /iuh
     if (ihsize + 14LL > hsize) {
         av_log(avctx, AV_LOG_ERROR, "invalid header size %u\n", hsize);
         return AVERROR_INVALIDDATA;
     }
 
-    /* sometimes file size is set to some headers size, set a real size in that case */
+    /* sometimes file size is set to some headers size, set a real size in that case /uhbu
     if (fsize == 14 || fsize == ihsize + 14)
         fsize = buf_size - 2;
 
@@ -87,16 +91,17 @@ static int cool_decode_frame(AVCodecContext *avctx,
                fsize, hsize);
         return AVERROR_INVALIDDATA;
     }
+*/
 
-    switch (ihsize) {
+    /*switch (ihsize) {
     case  40: // windib
     case  56: // windib v3
     case  64: // OS/2 v2
     case 108: // windib v4
-    case 124: // windib v5
+    case 124: // windib v5*/
         width  = bytestream_get_le32(&buf);
         height = bytestream_get_le32(&buf);
-        break;
+        /*break;
     case  12: // OS/2 v1
         width  = bytestream_get_le16(&buf);
         height = bytestream_get_le16(&buf);
@@ -105,10 +110,10 @@ static int cool_decode_frame(AVCodecContext *avctx,
         avpriv_report_missing_feature(avctx, "Information header size %u",
                                       ihsize);
         return AVERROR_PATCHWELCOME;
-    }
+    }*/
 
     /* planes */
-    if (bytestream_get_le16(&buf) != 1) {
+    /*if (bytestream_get_le16(&buf) != 1) {
         av_log(avctx, AV_LOG_ERROR, "invalid cool header\n");
         return AVERROR_INVALIDDATA;
     }
@@ -117,10 +122,10 @@ static int cool_decode_frame(AVCodecContext *avctx,
 
     if (ihsize >= 40)
         comp = bytestream_get_le32(&buf);
-    else
+    else*/
         comp = BMP_RGB;
 
-    if (comp != BMP_RGB && comp != BMP_BITFIELDS && comp != BMP_RLE4 &&
+    /*if (comp != BMP_RGB && comp != BMP_BITFIELDS && comp != BMP_RLE4 &&
         comp != BMP_RLE8) {
         av_log(avctx, AV_LOG_ERROR, "cool coding %d not supported\n", comp);
         return AVERROR_INVALIDDATA;
@@ -134,15 +139,17 @@ static int cool_decode_frame(AVCodecContext *avctx,
         if (ihsize > 40)
         alpha = bytestream_get_le32(&buf);
     }
-
+*/
     ret = ff_set_dimensions(avctx, width, height > 0 ? height : -(unsigned)height);
-    if (ret < 0) {
+    if (ret < 0)
+    {
         av_log(avctx, AV_LOG_ERROR, "Failed to set dimensions %d %d\n", width, height);
         return AVERROR_INVALIDDATA;
     }
 
-    avctx->pix_fmt = AV_PIX_FMT_NONE;
-
+    /*avctx->pix_fmt = AV_PIX_FMT_NONE;*/
+    avctx->pix_fmt = AV_PIX_FMT_PAL8;
+/*
     switch (depth) {
     case 32:
         if (comp == BMP_BITFIELDS) {
@@ -208,7 +215,7 @@ static int cool_decode_frame(AVCodecContext *avctx,
     if (avctx->pix_fmt == AV_PIX_FMT_NONE) {
         av_log(avctx, AV_LOG_ERROR, "unsupported pixel format\n");
         return AVERROR_INVALIDDATA;
-    }
+    }*/
 
     if ((ret = ff_get_buffer(avctx, p, 0)) < 0)
         return ret;
@@ -221,9 +228,11 @@ static int cool_decode_frame(AVCodecContext *avctx,
     /* Line size in file multiple of 4 */
     n = ((avctx->width * depth + 31) / 8) & ~3;
 
-    if (n * avctx->height > dsize && comp != BMP_RLE4 && comp != BMP_RLE8) {
+    if (n * avctx->height > dsize/* && comp != BMP_RLE4 && comp != BMP_RLE8*/)
+    {
         n = (avctx->width * depth + 7) / 8;
-        if (n * avctx->height > dsize) {
+        if (n * avctx->height > dsize)
+        {
             av_log(avctx, AV_LOG_ERROR, "not enough data (%d < %d)\n",
                    dsize, n * avctx->height);
             return AVERROR_INVALIDDATA;
@@ -232,23 +241,28 @@ static int cool_decode_frame(AVCodecContext *avctx,
     }
 
     // RLE may skip decoding some picture areas, so blank picture before decoding
-    if (comp == BMP_RLE4 || comp == BMP_RLE8)
-        memset(p->data[0], 0, avctx->height * p->linesize[0]);
+    /*if (comp == BMP_RLE4 || comp == BMP_RLE8)
+        memset(p->data[0], 0, avctx->height * p->linesize[0]);*/
 
-    if (height > 0) {
+    if (height > 0)
+    {
         ptr      = p->data[0] + (avctx->height - 1) * p->linesize[0];
         linesize = -p->linesize[0];
-    } else {
+    }
+
+    else
+    {
         ptr      = p->data[0];
         linesize = p->linesize[0];
     }
 
-    if (avctx->pix_fmt == AV_PIX_FMT_PAL8) {
+    if (avctx->pix_fmt == AV_PIX_FMT_PAL8)
+    {
         int colors = 1 << depth;
 
         memset(p->data[1], 0, 1024);
 
-        if (ihsize >= 36) {
+        /*if (ihsize >= 36) {
             int t;
             buf = buf0 + 46;
             t   = bytestream_get_le32(&buf);
@@ -259,25 +273,39 @@ static int cool_decode_frame(AVCodecContext *avctx,
             } else if (t) {
                 colors = t;
             }
-        } else {
-            colors = FFMIN(256, (hsize-ihsize-14) / 3);
-        }
-        buf = buf0 + 14 + ihsize; //palette location
+        } else {*/
+            colors = FFMIN(256, (hsize-14) / 3);
+        /*}*/
+        buf = buf0 + 14; //palette location
         // OS/2 bitmap, 3 bytes per palette entry
-        if ((hsize-ihsize-14) < (colors << 2)) {
-            if ((hsize-ihsize-14) < colors * 3) {
+        if ((hsize-14) < (colors << 2))
+        {
+            if ((hsize-14) < colors * 3)
+            {
                 av_log(avctx, AV_LOG_ERROR, "palette doesn't fit in packet\n");
                 return AVERROR_INVALIDDATA;
             }
             for (i = 0; i < colors; i++)
-                ((uint32_t*)p->data[1])[i] = (0xFFU<<24) | bytestream_get_le24(&buf);
-        } else {
+                /**/
+                {
+                  ((uint32_t*)p->data[1])[i] = (0xFFU<<24) | bytestream_get_le24(&buf);
+                  /*((uint32_t*)p->data[1])[i] = 0xFF0000;*/
+                  av_log(avctx, AV_LOG_ERROR, "Image: 3 color format\n");
+                }
+        }
+        else
+        {
             for (i = 0; i < colors; i++)
-                ((uint32_t*)p->data[1])[i] = 0xFFU << 24 | bytestream_get_le32(&buf);
+                /**/
+                {
+                  /*((uint32_t*)p->data[1])[i] = 0xFFFF0099;*/
+                  ((uint32_t*)p->data[1])[i] = 0xFFU << 24 | bytestream_get_le32(&buf);
+                  av_log(avctx, AV_LOG_ERROR, "Image: 4 color format\n");
+                }
         }
         buf = buf0 + hsize;
     }
-    if (comp == BMP_RLE4 || comp == BMP_RLE8) {
+    /*if (comp == BMP_RLE4 || comp == BMP_RLE8) {
         if (comp == BMP_RLE8 && height < 0) {
             p->data[0]    +=  p->linesize[0] * (avctx->height - 1);
             p->linesize[0] = -p->linesize[0];
@@ -288,8 +316,8 @@ static int cool_decode_frame(AVCodecContext *avctx,
             p->data[0]    +=  p->linesize[0] * (avctx->height - 1);
             p->linesize[0] = -p->linesize[0];
         }
-    } else {
-        switch (depth) {
+    } else */
+        /*switch (depth) {
         case 1:
             for (i = 0; i < avctx->height; i++) {
                 int j;
@@ -309,13 +337,14 @@ static int cool_decode_frame(AVCodecContext *avctx,
             break;
         case 8:
         case 24:
-        case 32:
-            for (i = 0; i < avctx->height; i++) {
+        case 32:*/
+            for (i = 0; i < avctx->height; i++)
+            {
                 memcpy(ptr, buf, n);
                 buf += n;
                 ptr += linesize;
             }
-            break;
+            /*break;
         case 4:
             for (i = 0; i < avctx->height; i++) {
                 int j;
@@ -343,8 +372,8 @@ static int cool_decode_frame(AVCodecContext *avctx,
             av_log(avctx, AV_LOG_ERROR, "cool decoder is broken\n");
             return AVERROR_INVALIDDATA;
         }
-    }
-    if (avctx->pix_fmt == AV_PIX_FMT_BGRA) {
+    }*/
+    /*if (avctx->pix_fmt == AV_PIX_FMT_BGRA) {
         for (i = 0; i < avctx->height; i++) {
             int j;
             uint8_t *ptr = p->data[0] + p->linesize[0]*i + 3;
@@ -357,7 +386,7 @@ static int cool_decode_frame(AVCodecContext *avctx,
         }
         if (i == avctx->height)
             avctx->pix_fmt = p->format = AV_PIX_FMT_BGR0;
-    }
+    }*/
 
     *got_frame = 1;
 

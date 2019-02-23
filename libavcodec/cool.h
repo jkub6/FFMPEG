@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVCODEC_BMP_H
-#define AVCODEC_BMP_H
+#ifndef AVCODEC_COOL_H
+#define AVCODEC_COOL_H
 
 #include "avcodec.h"
 
