@@ -1,5 +1,5 @@
 /*
- * BMP image format decoder
+ * cool image format decoder
  * Copyright (c) 2005 Mans Rullgard
  *
  * This file is part of FFmpeg.
@@ -29,7 +29,7 @@
 #include "internal.h"
 #include "msrledec.h"
 
-static int bmp_decode_frame(AVCodecContext *avctx,
+static int cool_decode_frame(AVCodecContext *avctx,
                             void *data, int *got_frame,
                             AVPacket *avpkt)
 {
@@ -109,7 +109,7 @@ static int bmp_decode_frame(AVCodecContext *avctx,
 
     /* planes */
     if (bytestream_get_le16(&buf) != 1) {
-        av_log(avctx, AV_LOG_ERROR, "invalid BMP header\n");
+        av_log(avctx, AV_LOG_ERROR, "invalid cool header\n");
         return AVERROR_INVALIDDATA;
     }
 
@@ -122,7 +122,7 @@ static int bmp_decode_frame(AVCodecContext *avctx,
 
     if (comp != BMP_RGB && comp != BMP_BITFIELDS && comp != BMP_RLE4 &&
         comp != BMP_RLE8) {
-        av_log(avctx, AV_LOG_ERROR, "BMP coding %d not supported\n", comp);
+        av_log(avctx, AV_LOG_ERROR, "cool coding %d not supported\n", comp);
         return AVERROR_INVALIDDATA;
     }
 
@@ -195,7 +195,7 @@ static int bmp_decode_frame(AVCodecContext *avctx,
         if (hsize - ihsize - 14 > 0) {
             avctx->pix_fmt = AV_PIX_FMT_PAL8;
         } else {
-            av_log(avctx, AV_LOG_ERROR, "Unknown palette for %u-colour BMP\n",
+            av_log(avctx, AV_LOG_ERROR, "Unknown palette for %u-colour cool\n",
                    1 << depth);
             return AVERROR_INVALIDDATA;
         }
@@ -340,7 +340,7 @@ static int bmp_decode_frame(AVCodecContext *avctx,
             }
             break;
         default:
-            av_log(avctx, AV_LOG_ERROR, "BMP decoder is broken\n");
+            av_log(avctx, AV_LOG_ERROR, "cool decoder is broken\n");
             return AVERROR_INVALIDDATA;
         }
     }
@@ -366,9 +366,9 @@ static int bmp_decode_frame(AVCodecContext *avctx,
 
 AVCodec ff_cool_decoder = {
     .name           = "cool",
-    .long_name      = NULL_IF_CONFIG_SMALL("BMP (Windows and OS/2 bitmap)"),
+    .long_name      = NULL_IF_CONFIG_SMALL("cool (Windows and OS/2 bitmap)"),
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = AV_CODEC_ID_COOL,
-    .decode         = bmp_decode_frame,
+    .decode         = cool_decode_frame,
     .capabilities   = AV_CODEC_CAP_DR1,
 };
