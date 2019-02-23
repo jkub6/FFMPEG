@@ -31,6 +31,17 @@
 
 static const AVCodecDescriptor codec_descriptors[] = {
     /* video codecs */
+    /*
+    Addition to FFMPEG Library for Checkpoint 2.
+    ~ Jake Larkin and Campbell McGavin
+    */
+    { /* COOL description */
+    .id        = AV_CODEC_ID_COOL,
+    .type      = AVMEDIA_TYPE_VIDEO,
+    .name      = "cool",
+    .long_name = NULL_IF_CONFIG_SMALL("COOL image (CS 3505 Spring 2019)"),
+    .props     = AV_CODEC_PROP_LOSSY,
+    },
     {
         .id        = AV_CODEC_ID_MPEG1VIDEO,
         .type      = AVMEDIA_TYPE_VIDEO,

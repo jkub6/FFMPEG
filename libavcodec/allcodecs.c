@@ -29,6 +29,17 @@
 #include "avcodec.h"
 #include "version.h"
 
+/*
+Addition to FFMPEG Library for Checkpoint 2.
+~ Jake Larkin and Campbell McGavin
+*/
+extern AVCodec ff_cool_encoder;
+extern AVCodec ff_cool_decoder;
+
+
+
+
+
 extern AVCodec ff_a64multi_encoder;
 extern AVCodec ff_a64multi5_encoder;
 extern AVCodec ff_aasc_decoder;
