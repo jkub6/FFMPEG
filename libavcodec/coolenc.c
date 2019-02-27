@@ -24,15 +24,11 @@
 #include "libavutil/avassert.h"
 #include "avcodec.h"
 #include "bytestream.h"
-#include "cool.h"
 #include "internal.h"
 
-static const uint32_t monoblack_pal[] = { 0x000000, 0xFFFFFF };
-static const uint32_t rgb565_masks[]  = { 0xF800, 0x07E0, 0x001F };
-static const uint32_t rgb444_masks[]  = { 0x0F00, 0x00F0, 0x000F };
 
-static av_cold int cool_encode_init(AVCodecContext *avctx){
-
+static av_cold int cool_encode_init(AVCodecContext *avctx)
+{
    if (avctx->pix_fmt == AV_PIX_FMT_RGB8)
         avctx->bits_per_coded_sample = 8;
     else
@@ -40,7 +36,6 @@ static av_cold int cool_encode_init(AVCodecContext *avctx){
         av_log(avctx, AV_LOG_INFO, "unsupported pixel format\n");
         return AVERROR(EINVAL);
     }
-
     return 0;
 }
 
@@ -48,10 +43,9 @@ static int cool_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
                             const AVFrame *pict, int *got_packet)
 {
     const AVFrame * const p = pict;
-    int n_bytes_image, n_bytes_per_row, n_bytes, i, n, hsize, ret;
-    const uint32_t *pal = NULL;
+    int n_bytes_image, n_bytes_per_row, n_bytes, i, hsize, ret;
     uint32_t palette256[256];
-    int pad_bytes_per_row, pal_entries = 0, compression = BMP_RGB;
+    int pad_bytes_per_row = 0;
     int bit_count = avctx->bits_per_coded_sample;
     uint8_t *ptr, *buf;
 
@@ -64,17 +58,14 @@ FF_ENABLE_DEPRECATION_WARNINGS
 
     av_assert1(bit_count == 8);
     avpriv_set_systematic_pal2(palette256, avctx->pix_fmt);
-    pal = palette256;
 
-    if (pal && !pal_entries) pal_entries = 1 << bit_count;
     n_bytes_per_row = ((int64_t)avctx->width * (int64_t)bit_count + 7LL) >> 3LL;
     pad_bytes_per_row = (4 - n_bytes_per_row) & 3;
     n_bytes_image = avctx->height * (n_bytes_per_row + pad_bytes_per_row);
 
     // STRUCTURE.field refer to the MSVC documentation for BITMAPFILEHEADER
     // and related pages.
-#define SIZE_BITMAPFILEHEADER 14
-#define SIZE_BITMAPINFOHEADER 40
+
     hsize = 10;
     n_bytes = n_bytes_image + hsize;
     if ((ret = ff_alloc_packet2(avctx, pkt, n_bytes, 0)) < 0)
@@ -82,24 +73,15 @@ FF_ENABLE_DEPRECATION_WARNINGS
     buf = pkt->data;
     bytestream_put_byte(&buf, 'c');                   // BITMAPFILEHEADER.bfType
     bytestream_put_byte(&buf, 'o');                   // do.
-
     bytestream_put_le32(&buf, avctx->width);          // BITMAPINFOHEADER.biWidth
     bytestream_put_le32(&buf, avctx->height);         // BITMAPINFOHEADER.biHeight
 
-    for (i = 0; i < pal_entries; i++)
-        bytestream_put_le32(&buf, pal[i] & 0xFFFFFF);
     // BMP files are bottom-to-top so we start from the end...
     ptr = p->data[0] + (avctx->height - 1) * p->linesize[0];
     buf = pkt->data + hsize;
-    for(i = 0; i < avctx->height; i++) {
-        if (bit_count == 16) {
-            const uint16_t *src = (const uint16_t *) ptr;
-            uint16_t *dst = (uint16_t *) buf;
-            for(n = 0; n < avctx->width; n++)
-                AV_WL16(dst + n, src[n]);
-        } else {
-            memcpy(buf, ptr, n_bytes_per_row);
-        }
+    for(i = 0; i < avctx->height; i++)
+    {
+        memcpy(buf, ptr, n_bytes_per_row);
         buf += n_bytes_per_row;
         memset(buf, 0, pad_bytes_per_row);
         buf += pad_bytes_per_row;
@@ -118,8 +100,5 @@ AVCodec ff_bmp_encoder = {
     .id             = AV_CODEC_ID_COOL,
     .init           = cool_encode_init,
     .encode2        = cool_encode_frame,
-    .pix_fmts       = (const enum AVPixelFormat[]){
-        AV_PIX_FMT_RGB8,
-        AV_PIX_FMT_NONE
-    },
+    .pix_fmts       = (const enum AVPixelFormat[]){AV_PIX_FMT_RGB8, AV_PIX_FMT_NONE},
 };
